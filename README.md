@@ -2,4 +2,4 @@
 
 To study the pulsar backend via algorithm.
 
-Clone from [here](http://dspsr.sourceforge.net/).
+Package cloned from [here](http://dspsr.sourceforge.net/).
