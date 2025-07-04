@@ -1,0 +1,6 @@
+
+// @configure_input@ 
+
+// Absolute path to dspsr source code
+#define DSPSR_SRCDIR "@abs_top_srcdir@"
+

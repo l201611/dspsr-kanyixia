@@ -1,0 +1,20 @@
+#!/bin/csh -f
+
+if ( "$1" == "-h" || "$1" == "--help" || "$1" == "" ) then
+  echo
+  echo "greps: searches dspsr source code for regular expression"
+  echo
+  echo "usage:"
+  echo "  greps <regex>"
+  echo
+  exit
+endif
+
+set dirs="Kernel Signal More test python"
+
+grep "$*" \
+	`find $dirs -name "*.[hcC]"` \
+	`find $dirs -name Makefile.am` \
+	`find $dirs -name "*.cu"` \
+        `find $dirs -name "*.cpp"`
+

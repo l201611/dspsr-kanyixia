@@ -1,0 +1,11 @@
+#! /bin/csh -f
+
+echo "Running update ..."
+
+git pull origin master |& tee update.log
+
+git submodule update --init --recursive |& tee -a update.log
+
+automake --add-missing
+
+date >> update.log
