@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT([DSPSR],[2025-04-24],[dspsr-developers@lists.sourceforge.net])
+AC_INIT([DSPSR],[2025-07-16],[dspsr-developers@lists.sourceforge.net])
 
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([config])
@@ -24,7 +24,7 @@ PKG_INSTALLDIR
 # Check for PSRCHIVE installation
 #
 
-AX_PKG_CHECK_MODULES([PSRCHIVE],[psrchive >= 2025-04-24],[])
+AX_PKG_CHECK_MODULES([PSRCHIVE],[psrchive >= 2025-07-16],[])
 
 PSRCHIVE_ACLOCAL=`pkg-config --variable=aclocal psrchive`
 AC_SUBST(PSRCHIVE_ACLOCAL)
@@ -249,10 +249,13 @@ AC_CONFIG_FILES([Makefile
 		Kernel/Formats/wapp/Makefile
 		Signal/Makefile
 		Signal/Statistics/Makefile
+		Signal/Generators/Makefile
+		Signal/Generators/tests/Makefile
 		Signal/General/Makefile
 		Signal/General/tests/Makefile
 		Signal/General/testutils/Makefile
 		Signal/Pulsar/Makefile
+		Signal/Pulsar/tests/Makefile
 		Management/Makefile
 		Management/dspsr_ldflags
 		Management/dspsr_cflags

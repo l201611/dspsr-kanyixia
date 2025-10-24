@@ -30,12 +30,14 @@ TESTS += \
   Kernel/Classes/tests/WeightedTimeSeriesTest \
   Signal/General/tests/ChanPolSelectTest \
   Signal/General/tests/ConvolutionTest \
+  Signal/General/tests/InverseFilterbankTest \
   Signal/General/tests/LoadToQuantizeTest \
   Signal/General/tests/RescaleTest \
   Signal/General/tests/ResponseTest \
   Signal/General/tests/ResponseProductTest \
   Signal/General/tests/RescaleMedianMadCalculatorTest \
-  Signal/General/tests/TScrunchTest
+  Signal/General/tests/TScrunchTest \
+  Signal/Pulsar/tests/CyclicFoldTest
 
 if HAVE_PSRDADA
 TESTS += Kernel/Classes/tests/DADAOutputFileTest

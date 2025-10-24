@@ -1,0 +1,34 @@
+#!/usr/bin/bash
+
+image=`grep DSPSR_BASE_IMAGE: .gitlab-ci.yml | awk '{print $2}'`
+
+DSPSR_TEST_DATA=""
+SET_HTTPS_PROXY=""
+
+if [ -d /data/dspsr-test-data ]; then 
+  echo "mounting dspsr test data in /data"
+  DSPSR_TEST_DATA="-v /data:/data"
+
+  if [ -d /data/dspsr-test-data/unit-tests ]; then
+    echo "setting DSPSR_TEST_DATA_DIR environment variable"
+    DSPSR_TEST_DATA="$DSPSR_TEST_DATA -e DSPSR_TEST_DATA_DIR=/data/dspsr-test-data/unit-tests"
+  fi
+fi
+
+if [ -v https_proxy ]; then
+  echo "passing the https_proxy environment variable"
+  SET_HTTPS_PROXY="-e https_proxy=$https_proxy"
+fi
+
+if [ -f $HOME/.Xauthority ]; then
+  echo "setting up X11"
+  chmod a+r $HOME/.Xauthority
+  X11_ARGS="--net=host -e DISPLAY -v ${HOME}/.Xauthority:/root/.Xauthority"
+fi
+
+echo "docker run $image"
+
+docker run --rm -ti -v ${PWD}:/mnt/dspsr -w /mnt/dspsr \
+	${DSPSR_TEST_DATA} ${SET_HTTPS_PROXY} ${X11_ARGS} \
+	${image} bash
+
