@@ -1,0 +1,4 @@
+GTEST_HOME = $(top_srcdir)/resources/gtest
+
+GTEST_LIBS = $(top_builddir)/resources/libgtest.la -lpthread
+GTEST_CFLAGS = -I$(GTEST_HOME)/googletest/include -I$(GTEST_HOME)/googlemock/include

@@ -1,0 +1,21 @@
+###########################################################################
+#
+# Rules for CUDA
+#
+###########################################################################
+
+.cu.o:
+	$(CUDA_NVCC) -o $@ -c $<
+
+.cu.lo:
+	$(top_srcdir)/config/cudalt.py $(top_builddir)/libtool $@ $(CUDA_NVCC) -c $<
+
+$(DEPDIR)/%.Po: %.cu
+	$(CUDA_NVCC) -c $< -MM --dependency-output $(DEPDIR)/$*.Po
+
+CUDA_DEPS = $(patsubst %.cu,$(DEPDIR)/%.Po,$(filter %.cu,$(CUDA_SOURCES)))
+
+-include $(CUDA_DEPS)
+
+# Clean up generated .Po dependency files
+CLEANFILES += $(CUDA_DEPS)
