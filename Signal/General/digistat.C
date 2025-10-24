@@ -1,0 +1,522 @@
+/***************************************************************************
+ *
+ *   Copyright (C) 2002 by Willem van Straten
+ *   Licensed under the Academic Free License version 2.1
+ *
+ ***************************************************************************/
+
+#include "dsp/SourceOpen.h"
+#include "dsp/ExcisionStatsPlotter.h"
+#include "dsp/ExcisionUnpacker.h"
+#include "dsp/BitSeries.h"
+#include "dsp/TimeSeries.h"
+#include "dsp/IOManager.h"
+#include "dsp/Input.h"
+#include "Error.h"
+
+#include "strutil.h"
+#include "dirutil.h"
+#include "templates.h"
+
+#include <cpgplot.h>
+
+#include <iostream>
+#include <unistd.h>
+
+using namespace std;
+
+static const char* args = "bc:D:fhHln:S:s:T:t:vVw:z:";
+
+void usage ()
+{
+  cout << "digistat - plots digitizer statistics\n"
+    "Usage: digistat [" << args << "] file1 [file2 ...] \n"
+    "Unpacking parameters:\n"
+    " -n <nsample>   number of samples used in estimating undigitized power\n"
+    " -c <cutoff>    cutoff threshold for impulsive interference excision\n"
+    " -t <threshold> sampling threshold at record time\n"
+    "Display paramters:\n"
+    " -D <device>    set the pgplot device to use\n"
+    " -b             black and white \n"
+    " -f             plot full range of possible values on histogram x-axis\n"
+    " -H             plot only histograms (no mean+rms time series)\n"
+    " -l             logarithmic scale on histogram y-axis\n"
+    " -s <seconds>   total amount of data in each plot\n"
+    " -w <seconds>   amount of data averaged into each point in plot\n"
+       << endl;
+}
+
+int main (int argc, char** argv) try 
+{
+  char* metafile = 0;
+  bool display = true;
+  bool verbose = false;
+  bool full_xscale = false;
+  bool logarithmic_yscale = false;
+  bool histograms_only = false;
+  
+  // unknown until data are loaded
+  unsigned excision_nsample = 0;
+
+  // disable excision by default
+  float excision_cutoff = 0.0;
+
+  // unknown until data are loaded
+  float excision_threshold = 0.0;
+
+  float time_per_plot = 1.0;
+  float time_per_point = 1e-3;
+
+  double seek_seconds = 0;
+  double total_seconds = 0;
+
+  string pgdev = "?";
+
+  bool colour = true;
+  int point_lw = 1;
+
+  int c;
+  int scanned;
+
+  vector<unsigned> to_zap;
+
+  while ((c = getopt(argc, argv, args)) != -1)
+    switch (c) {
+
+    case 'b':
+      colour = false;
+      point_lw = 5;
+      break;
+
+    case 'c':
+      scanned = sscanf (optarg, "%f", &excision_cutoff);
+      if (scanned != 1) {
+        cerr << "digistat: error parsing " << optarg << " as"
+          " dynamic output level assignment cutoff" << endl;
+        return -1;
+      }
+      break;
+
+    case 'f':
+      full_xscale = true;
+      break;
+
+    case 'H':
+      histograms_only = true;
+      break;
+
+    case 'l':
+      logarithmic_yscale = true;
+      break;
+
+    case 'h':
+      usage ();
+      return 0;
+
+    case 'n':
+      scanned = sscanf (optarg, "%u", &excision_nsample);
+      if (scanned != 1)
+      {
+        cerr << "digistat: error parsing " << optarg << " as"
+          " number of samples used to estimate undigitized power" << endl;
+        return -1;
+      }
+      break;
+
+    case 's':
+      scanned = sscanf (optarg, "%f", &time_per_plot);
+      if (scanned != 1) {
+        cerr << "digistat: error parsing " << optarg << " as"
+          " time per plot" << endl;
+        return -1;
+      }
+      break;
+
+    case 't':
+      scanned = sscanf (optarg, "%f", &excision_threshold);
+      if (scanned != 1) {
+        cerr << "digistat: error parsing " << optarg << " as"
+          " sampling threshold" << endl;
+        return -1;
+      }
+      break;
+
+    case 'S':
+      seek_seconds = strtod (optarg, 0);
+      break;
+
+    case 'T':
+      total_seconds = strtod (optarg, 0);
+      break;
+
+    case 'V':
+      dsp::Operation::verbose = true;
+      dsp::Observation::verbose = true;
+    case 'v':
+      verbose = true;
+      break;
+
+    case 'w':
+      scanned = sscanf (optarg, "%f", &time_per_point);
+      if (scanned != 1) {
+        cerr << "digistat: error parsing -w " << optarg << endl;
+        return -1;
+      }
+      cerr << "digistat: time per point=" << time_per_point << " s" << endl;
+      break;
+
+    case 'D':
+      pgdev = optarg;
+      if (pgdev.empty()) {
+        pgdev = "?";
+      }
+      break;
+
+    case 'z':
+    {
+      unsigned zap;
+      scanned = sscanf (optarg, "%u", &zap);
+      if (scanned != 1) {
+        cerr << "digistat: error parsing " << optarg << " as"
+          " histogram bin to zap" << endl;
+        return -1;
+      }
+      to_zap.push_back(zap);
+      break;
+    }
+    default:
+      cerr << "invalid param '" << c << "'" << endl;
+    }
+
+  if (time_per_point > 0.5 * time_per_plot)
+  {
+    cerr << "digistat: Cannot plot less than two points at a time\n"
+      " -w <point> must be less than half of -s <plot>\n" << endl;
+    return -1;
+  }
+
+  vector <string> filenames;
+
+  if (metafile)
+    stringfload (&filenames, metafile);
+  else 
+    for (int ai=optind; ai<argc; ai++)
+      dirglob (&filenames, argv[ai]);
+
+  if (filenames.size() == 0) 
+  {
+    usage ();
+    return 0;
+  }
+
+  if (display) 
+  {
+    cpgbeg (0, pgdev.c_str(), 0, 0);
+    cpgask(1);
+    cpgsvp (0.05, 0.95, 0.05, 0.95);
+    cpgsch (2.0);
+  }
+
+  // converted voltages container
+  Reference::To<dsp::TimeSeries> voltages = new dsp::TimeSeries;
+
+  dsp::SourceOpen opener;
+
+  if (verbose)
+    cerr << "Creating Source instance" << endl;
+
+  Reference::To<dsp::Source> source = opener.open(argc, argv);
+  source->set_output (voltages);
+
+  // plots digitization statistics
+  Reference::To<dsp::BitStatsPlotter> plotter;
+  Reference::To<dsp::ExcisionUnpacker> excision;
+  Reference::To<dsp::HistUnpacker> unpack;
+
+  auto manager = dynamic_cast<dsp::IOManager*>(source.get());
+  if (manager)
+    excision = dynamic_cast<dsp::ExcisionUnpacker*>(manager->get_unpacker());
+
+  if (excision)
+  {
+    // plots two-bit digitization statistics
+    plotter = new dsp::ExcisionStatsPlotter;
+    plotter->set_data( excision );
+
+    if ( excision_nsample )
+      excision -> set_ndat_per_weight ( excision_nsample );
+
+    if ( excision_threshold )
+      excision -> set_threshold ( excision_threshold );
+
+    cerr << "digistat: setting excision unpacker cutoff to " << excision_cutoff << endl;
+
+    excision -> set_cutoff_sigma ( excision_cutoff );
+
+    unpack = excision;
+  }
+  else if (manager)
+    unpack = dynamic_cast<dsp::HistUnpacker*>(manager->get_unpacker());
+      
+  if (unpack)
+  {
+    plotter = new dsp::BitStatsPlotter;
+    plotter->set_data( unpack );
+  }
+  else
+  {
+    cerr << "digistat: Unpacker does not maintain a histogram" << endl;
+    plotter = 0;
+  }
+
+  if (seek_seconds)
+    source->seek_time (seek_seconds);
+  
+  if (total_seconds)
+    source->set_total_time (seek_seconds + total_seconds);
+
+  cerr << "Bandwidth = " << source->get_info()->get_bandwidth() << endl;
+  cerr << "Sampling rate = " << source->get_info()->get_rate() << endl;
+
+  if (source->get_info()->get_rate() <= 0.0)
+  {
+    cerr << "digistat: invalid sampling rate" << endl;
+    return -1;
+  }
+
+  // set the number of samples to load
+  double samples = source->get_info()->get_rate() * time_per_plot;
+  uint64_t block_size = uint64_t(samples + 0.5);
+  time_per_plot = double(block_size) / source->get_info()->get_rate();
+
+  cerr << block_size << " samples per " 
+        << time_per_plot << "s plot" << endl;
+
+  source->set_block_size( block_size );
+  block_size = source->get_block_size();
+  double megabyte = 1024*1024;
+  cerr << "digistat: blocksize=" << block_size
+        << " samples or " << source->get_info()->get_nbytes(block_size)/megabyte << " MB" << endl;
+
+  // set the number of samples to average
+  samples = source->get_info()->get_rate() * time_per_point;
+  uint64_t point_size = uint64_t(samples + 0.5);
+  time_per_point = double(point_size) / source->get_info()->get_rate();
+
+  cerr << point_size << " samples per " 
+        << time_per_point*1e6 << "us point" << endl;
+
+  uint64_t npoints = block_size / point_size;
+  if (block_size % point_size)
+    npoints ++;
+
+  cerr << npoints << " points per plot" << endl;
+
+  vector<float> xaxis (npoints);
+  vector<float> mean  (npoints);
+  vector<float> rms   (npoints);
+
+  double current_time = 0.0;
+
+  if (plotter)
+  {
+    plotter->colour = colour;
+
+    for (auto index: to_zap)
+      plotter->zap(index);
+
+    plotter->full_xscale = full_xscale;
+
+    plotter->logarithmic_yscale = logarithmic_yscale;
+  }
+
+  while (!source->end_of_data())
+  {
+    if (unpack)
+      unpack->zero_histogram ();
+    
+    source->operate();
+
+    if (verbose)
+      cerr << "input sample=" << voltages->get_input_sample() 
+            << " ndat=" << voltages->get_ndat() << endl;
+
+    if (voltages->get_ndat() < point_size)
+      break;
+
+    for (unsigned ichan=0; ichan<voltages->get_nchan(); ++ichan)
+    {
+      float bottom = 0;
+
+      for (unsigned ipol=0; ipol<voltages->get_npol(); ++ipol)
+      {
+        if (display)
+        {
+          if (histograms_only)
+          {
+            cpgpage();
+          }
+          else
+          {
+            if (ipol % 2 == 0)
+            {
+              if (display)
+                cpgpage();
+              bottom = 0.55;
+            }
+            else
+              bottom = 0.08;
+          }
+
+          if (plotter) try
+          {
+            if (!histograms_only)
+              cpgsvp (0.7, 0.95, bottom, bottom+0.40);
+            plotter->plot (ichan,ipol);
+          }
+          catch (Error& e) { if (verbose) cerr << e << endl; }
+        }
+
+        if (histograms_only)
+          continue;
+
+        cpgsch (1.0);
+        cerr << "ichan=" << ichan << " ipol=" << ipol << endl;
+
+        float* data = voltages->get_datptr (ichan, ipol);
+        uint64_t nfloat = voltages->get_ndat() * voltages->get_ndim();
+        uint64_t npoint = point_size * voltages->get_ndim();
+        uint64_t idat = 0;
+
+        for (unsigned ipt=0; ipt<npoints; ipt++)
+        {
+          xaxis[ipt] = current_time + double(ipt)*time_per_point;
+
+          double sum = 0, sumsq = 0;
+          unsigned count = 0;
+          
+          for (uint64_t jdat=0; jdat<npoint && idat<nfloat; jdat++)
+          {
+            float sample = data[idat]; idat ++;
+
+            sum += sample;
+            sumsq += sample*sample;
+            count ++;
+          }
+
+          if (count == 0)
+            count = 1;
+              
+          mean[ipt] = sum/count;
+          double var  = (sumsq - sum*sum/count) / count;
+
+          rms[ipt] = 0.0;
+          if (var > 0)
+            rms[ipt] = sqrt(var);
+        }
+
+        float min = 0.0;
+        float max = 0.0;
+        float buf = 0.0;
+
+        // plot the mean
+        
+        minmax (mean, min, max);
+        buf = (max-min) * 0.05;
+
+        // cerr << "mean min=" << min << " max=" << max << endl;
+
+        if (min == max)
+          buf = 1.0;
+
+        cpgswin (current_time, current_time+time_per_plot, min-buf, max+buf);
+        cpgsvp (0.1, 0.63, bottom, bottom+0.20);
+        cpgsci(1);
+        
+        if (ipol==1 || voltages->get_npol()==1)
+        {
+          cpglab("Seconds from start of file", "", "");
+          cpgbox("bcnst",0.0,0,"bcnvst",0.0,0);
+        }
+        else
+        {
+          cpgbox("bcst",0.0,0,"bcnvst",0.0,0);
+        }
+
+        cpgmtxt("L",3.5,.5,.5,"mean");
+  
+        if (colour)
+          cpgsci(5);
+
+        cpgslw(point_lw);
+        cpgpt(npoints, &(xaxis[0]), &(mean[0]), -1);
+        cpgslw(1);
+  
+        // plot the rms
+        
+        minmax (rms, min, max);
+        buf = (max-min) * 0.05;
+
+        // cerr << "rms min=" << min << " max=" << max << endl;
+
+        if (min == max)
+          buf = 1.0;
+
+        cpgswin (current_time, current_time+time_per_plot, min-buf, max+buf);
+        cpgsvp (0.1, 0.63, bottom+0.20, bottom+0.40);
+        cpgsci(1);
+        cpgbox("bcst",0.0,0,"bcnvst",0.0,0);
+        cpgmtxt("L",3.5,.5,.5,"rms");
+
+        string title;
+
+        if (voltages->get_nchan() > 1)
+          title = "ichan=" + tostring(ichan);
+        if (voltages->get_npol() > 1)
+          title += " ipol=" + tostring(ipol);
+
+        if (title != "")
+          cpgmtxt("T",.5, 0.0, 0.0, title.c_str());
+
+        if (colour)
+          cpgsci(6);
+
+        cpgslw(point_lw);
+        cpgpt(npoints, &(xaxis[0]), &(rms[0]), -1);
+        cpgslw(1);
+      }
+
+      if (display && plotter && !histograms_only) 
+      {
+        cpgsvp (0.7, 0.95, bottom, 0.92);
+        plotter->label ();
+      }
+    }
+
+    current_time += time_per_plot;
+  }
+
+  if (verbose)
+    cerr << "end of data" << endl;
+  
+  if (display)
+    cpgend();
+  
+  return 0;
+}
+catch (Error& error)
+{
+  cerr << error << endl;
+  return -1;
+}
+catch (string& error)
+{
+  cerr << "exception thrown: " << error << endl;
+  return -1;
+}
+catch (std::exception& error)
+{
+  cerr << "exception thrown: " << error.what() << endl;
+  return -1;
+}
+
