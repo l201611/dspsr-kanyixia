@@ -1,0 +1,568 @@
+base_path: /data/dspsr-test-data/functional-pipeline-tests
+scripts_path: scripts
+
+test_cases:
+  TC01:
+    description: "DSPSR De-dispersion, Convolution"
+    commands:
+      - "dspsr DATASOURCE"
+    datasources:
+      - DS01
+      - DS06
+
+  TC02:
+    description: "DSPSR De-dispersion, Convolving Filterbank"
+    commands:
+      - "dspsr -F TNCHAN:D DATASOURCE"
+    datasources:
+      - DS01
+      - DS03
+      - DS04
+      - DS05
+
+  TC03:
+    description: "DSPSR Detection options without channelisation: DET in [1, 2, 4]"
+    # TODO: remove when pytest functions are implemented
+    commands:
+      - "dspsr -d ARG DATASOURCE"
+    args:
+      - 1
+      - 2
+      - 4
+    datasources:
+      - DS01
+
+  TC04:
+    description: "DSPSR Detection options with channelisation: DET in [1, 2, 4]"
+    # TODO: remove when pytest functions are implemented
+    commands:
+      - "dspsr -F TNCHAN:D -d ARG DATASOURCE"
+    args:
+      - 1
+      - 2
+      - 4
+    datasources:
+      - DS01
+      - DS03
+      - DS04
+
+  TC05:
+    description: "DSPSR Phase Bins options without channelisation: NBIN in [64, 1024, 4096]"
+    # TODO: remove -U 8448 when pytest functions are implemented
+    commands:
+      - "dspsr -b ARG DATASOURCE"
+    args:
+      - 64
+      - 128
+      - 4096
+    datasources:
+      - DS01
+
+  TC06:
+    description: "DSPSR Phase Bins options with channelisation: NBIN in [64, 1024, 4096]"
+    # TODO: remove -U 1033 when pytest functions are implemented
+    commands:
+      - "dspsr -U 1033 -F TNCHAN:D -b ARG DATASOURCE"
+    args:
+      - 64
+      - 128
+      - 4096
+    datasources:
+      - DS01
+      - DS03
+      - DS04
+
+  TC08:
+    description: "DSPSR Output Subint length options without channelisation: TSUB in [1, 8, 30]"
+    # TODO: remove when pytest functions are implemented
+    commands:
+      - "dspsr -L ARG DATASOURCE"
+    args:
+      - 64
+      - 128
+      - 4096
+    datasources:
+      - DS01
+
+  TC09:
+    description: "DSPSR Output Subint length options with channelisation: TSUB in [1, 8, 30]"
+    # TODO: remove when pytest functions are implemented
+    commands:
+      - "dspsr -F TNCHAN:D -L ARG DATASOURCE"
+    args:
+      - 64
+      - 128
+      - 4096
+    datasources:
+      - DS01
+      - DS03
+      - DS04
+
+  TC10:
+    description: "DSPSR Output file type options without channelisation: OFILE in [Timer, PSRFITS]"
+    # TODO: remove when pytest functions are implemented
+    commands:
+      - "dspsr -a ARG DATASOURCE"
+    args:
+      - Timer
+      - PSRFITS
+    datasources:
+      - DS01
+
+  TC11:
+    description: "DSPSR Output file type options with channelisation: OFILE in [Timer, PSRFITS]"
+    # TODO: remove when pytest functions are implemented
+    commands:
+      - "dspsr -F TNCHAN:D -a ARG DATASOURCE"
+    args:
+      - Timer
+      - PSRFITS
+    datasources:
+      - DS01
+      - DS03
+      - DS04
+  TC12:
+    description: "DSPSR folding calibrator with Convolving Filterbank"
+    commands:
+      - "dspsr -F TNCHAN:32 DATASOURCE"
+    datasources:
+      - DS07
+
+  TC13:
+    description: "DSPSR Input via DADA Buffer"
+    pre_commands:
+      - dada_db -k dada -b 13600000000 -n 1
+      - dada_diskdb -k dada -f DATASOURCE
+      - echo 'DADA INFO:'>dada.info
+      - echo 'key dada'>>dada.info
+    commands:
+      - "dspsr dada.info"
+    post_commands:
+      - "dada_db -d -k dada"
+    datasources:
+      - DS01
+
+  TC14:
+    description: "DIGIFITS De-dispersion, Convolution"
+    commands:
+      - "digifits -nsblk 4096 -do_dedisp true -D TDM -t TTSAMP DATASOURCE"
+    datasources:
+      - DS01
+
+  TC15:
+    description: "DIGIFITS No De-dispersion or channelisation"
+    commands:
+      - "digifits -nsblk 4096 -t TTSAMP DATASOURCE"
+    datasources:
+      - DS01
+
+  TC16:
+    description: "DIGIFITS Fscrunch options: FSCR in [4, 64]"
+    # below command fails due to requirement of "filterbank scheme"
+    # digifits -nsblk 4096 -t TTSAMP -f ARG DATASOURCE
+    commands:
+      - "digifits -nsblk 4096 -F TNCHAN:D -t TTSAMP -f ARG DATASOURCE"
+    args:
+      - 4
+      - 64
+    datasources:
+      - DS01
+      - DS03
+      - DS04
+
+  TC17:
+    description: "DIGIFITS Pscrunch options: PSCR in [1, 2, 4]"
+    # below command fails due to requirement of "filterbank scheme"
+    # digifits -nsblk 4096 -t TTSAMP ARG DATASOURCE
+    commands:
+      - digifits -nsblk 4096 -F TNCHAN:D -t TTSAMP -p ARG DATASOURCE
+    args:
+      - 1
+      - 2
+      - 4
+    datasources:
+      - DS01
+      - DS03
+      - DS04
+
+  TC18:
+    description: "DIGIFITS Tscrunch options: TSCR in [2, 32, 128]"
+    # below command fails due to requirement of "filterbank scheme"
+    # digifits -nsblk 4096 -tscr ARG DATASOURCE
+    commands:
+      - "digifits -nsblk 4096 -F TNCHAN:D -tscr ARG DATASOURCE"
+    args:
+      - 2
+      - 32
+      - 128
+    datasources:
+      - DS03
+      - DS04
+
+  TC19:
+    description: "DIGIFITS Quantisation options: NBIT in [2, 4, 8]"
+    commands:
+      - "digifits -nsblk 4096 -t TTSAMP -F TNCHAN:D  -b ARG DATASOURCE"
+    args:
+      - 2
+      - 4
+      - 8
+    datasources:
+      - DS01
+      - DS03
+      - DS04
+
+  TC20:
+    description: "DSPSR, Coherence"
+    commands:
+      - "dspsr -scloffs DATASOURCE"
+      - "dspsr DATASOURCE"
+    datasources:
+      - DS08
+      - DS10
+
+  TC21:
+    description: "DSPSR, Coherence, Single Pulse"
+    commands:
+      - "dspsr -scloffs -s DATASOURCE"
+      - "dspsr -s DATASOURCE"
+    datasources:
+      - DS09
+      - DS11
+
+  TC22:
+    description: "DSPSR Single Pulse, Incoherent De-dispersion"
+    commands:
+      - "dspsr -U 851 -scloffs -s -K DATASOURCE"
+      - "dspsr -U 851 -s -K DATASOURCE"
+    datasources:
+      - DS09
+      - DS11
+
+  TC23:
+    description: "DSPSR, PPQQ"
+    commands:
+      - "dspsr -scloffs DATASOURCE"
+      - "dspsr DATASOURCE"
+    datasources:
+      - DS12
+
+  TC24:
+    description: "DSPSR, Intensity"
+    commands:
+      - "dspsr -scloffs DATASOURCE"
+      - "dspsr DATASOURCE"
+    datasources:
+      - DS13
+
+  TC25:
+    description: "DSPSR, Intensity, input NBIT in [2, 4, 8]"
+    pre_commands:
+      - digifits -nsblk 4096 -t TTSAMP -b ARG DATASOURCE -o ARG.file.sf
+    commands:
+      - dspsr -scloffs ARG.file.sf
+    args:
+      - 2
+      - 4
+      - 8
+    datasources:
+      - DS12
+
+  TC26:
+    description: "DSPSR, Intensity, input NBIT in [2, 4, 8, 16]"
+    pre_commands:
+      - digifil -t 4 -b ARG DATASOURCE -o ARG.file.fil
+    commands:
+      - dspsr ARG.file.fil
+    args:
+      - 2
+      - 4
+      - 8
+      - 16
+    datasources:
+      - DS12
+
+  TC27:
+    description: "DIGIDADA Quantisation options: NBIT in [2, 4, 8]"
+    commands:
+      - "digidada -mad -c -scloffsout scloffs_rms.dat -b ARG DATASOURCE -o ARG.dada -minram 256"
+    args:
+      - 2
+      - 4
+      - 8
+    datasources:
+      - DS14
+
+datasources:
+  DS01:
+    description: "Bright MSP, Analytic, channelised"
+    telescope: MeerKAT
+    data_type: "DADA File"
+    file_name: "J0437-4715_MeerKAT_PTUSE_Analytic.dada"
+    npol: 2
+    ndim: 2
+    nbit: 8
+    nchan: 1024
+    bandwidth_mhz: 856
+    freq_mhz: 1284
+    tsamp: 1.196261682
+    source: "PSR J0437-4715"
+    utc_start_date: "2022-05-19-15:03:27"
+    duration_s: "1s"
+    data_size_gb: 3.4
+    test_attributes:
+      tnchan: 16384
+      tdm: 2.64476
+      ttsamp: 76.56e-6
+
+  DS03:
+    description: "Bright PSR, Nyquist, un-channelised"
+    telescope: CPSR2
+    data_type: "CPSR File"
+    file_name: "J1644-4559_Parkes_CPSR2_Nyquist.cpsr2"
+    npol: 2
+    ndim: 1
+    nbit: 2
+    nchan: 1
+    bandwidth_mhz: -64
+    freq_mhz: 1405
+    tsamp: 0.0078125
+    source: "PSR J1644-4559"
+    utc_start_date: "2007-05-18-15:57:21"
+    duration_s: 8.3
+    data_size_gb: 0.5
+    test_attributes:
+      tnchan: 64
+      tdm: 478.8
+      ttsamp: 64e-6
+
+  DS04:
+    description: "Bright PSR, Analytic, un-channelised"
+    telescope: Parkes
+    data_type: "DADA File"
+    file_name: "J0835-4510_Parkes_UWL_Analytic_1s.dada"
+    npol: 2
+    ndim: 2
+    nbit: 8
+    nchan: 1
+    bandwidth_mhz: 128
+    freq_mhz: 1408
+    tsamp: 0.0078125
+    source: "PSR J0835-4510"
+    utc_start_date: "2023-08-10-02:31:52"
+    duration_s: "1s"
+    data_size_gb: 0.5
+    test_attributes:
+      tnchan: 128
+      tdm: 67.9899
+      ttsamp: 64e-6
+
+  DS05:
+    description: "High DM/P PSR, Analytic, un-channelised"
+    telescope: Parkes
+    data_type: "DADA File"
+    file_name: "J1939+2134_Parkes_UWL_Analytic.dada"
+    npol: 2
+    ndim: 2
+    nbit: 16
+    nchan: 1
+    bandwidth_mhz: 128
+    freq_mhz: 1408
+    tsamp: 0.0078125
+    source: "PSR J1939+2134"
+    utc_start_date: "2018-09-01-09:52:55"
+    duration_s: 23
+    data_size_gb: 21
+    test_attributes:
+      tnchan: 128
+      tdm: 71.0216999
+      ttsamp: 64e-6
+
+  DS06:
+    description: "Bright MSP, Analytic, un-channelised"
+    telescope: MWA
+    data_type: "VDIF File"
+    file_name: "G0024_1164211816_ch142_u.hdr"
+    npol: 2
+    ndim: 2
+    nbit: 8
+    nchan: 1
+    bandwidth_mhz: 1.28
+    freq_mhz: 181.76
+    tsamp: 0.78125
+    source: "PSR J0437-4715"
+    utc_start_date: "2016-11-26-16:10:00"
+    duration_s: 100
+    data_size_gb: 0.5
+    test_attributes:
+      tnchan: 16
+      tdm: 2.64476
+      ttsamp: 64e-6
+
+  DS07:
+    description: "Calibrator, Analytic, un-channelised"
+    telescope: Parkes
+    data_type: "DADA File"
+    file_name: "J1022+1001_R_Parkes_UWL_Analytic.dada"
+    npol: 2
+    ndim: 2
+    nbit: 16
+    nchan: 1
+    bandwidth_mhz: 128
+    freq_mhz: 1408
+    tsamp: 0.0078125
+    source: J1022+1001_R
+    utc_start_date: 2022-06-12-05:01:20
+    duration_s: 1.0
+    data_size_gb: 1.0
+    test_attributes:
+      tnchan: 128
+      tdm: N/A
+      ttsamp: N/A
+
+  DS08:
+    description: "Bright MSP, Coherence, channelised"
+    telescope: MeerKAT
+    data_type: "PSRFITS File"
+    file_name: "J0437-4715_MeerKAT_PTUSE_Coherence.sf"
+    npol: 4
+    ndim: 1
+    nbit: 8
+    nchan: 768
+    bandwidth_mhz: 642
+    freq_mhz: 1284
+    tsamp: 9.57
+    source: "PSR J0437-4715"
+    utc_start_date: "2019-07-01-11:20:20"
+    duration_s: 10
+    data_size_gb: 3.1
+    test_attributes:
+      tnchan: N/A
+      tdm: 2.64476
+      ttsamp: N/A
+
+  DS09:
+    description: "Bright PSR, Coherence, channelised"
+    telescope: MeerKAT
+    data_type: "PSRFITS File"
+    file_name: "J1644-4559_MeerKAT_PTUSE_Coherence.sf"
+    npol: 4
+    ndim: 1
+    nbit: 8
+    nchan: 768
+    bandwidth_mhz: 642
+    freq_mhz: 1284
+    tsamp: 38.28
+    source: "PSR J1644-4559"
+    utc_start_date: "2019-10-13-13:46:10"
+    duration_s: 7.5
+    data_size_gb: 0.6
+    test_attributes:
+      tnchan: N/A
+      tdm: 478.8
+      ttsamp: N/A
+
+  DS10:
+    description: "Bright MSP, PPQQ, channelised"
+    telescope: MeerKAT
+    data_type: "PSRFITS File"
+    file_name: "J0437-4715_MeerKAT_PTUSE_PPQQ.sf"
+    npol: 2
+    ndim: 1
+    nbit: 8
+    nchan: 768
+    bandwidth_mhz: 642
+    freq_mhz: 1284
+    tsamp: 9.57
+    source: "PSR J0437-4715"
+    utc_start_date: "2019-07-01-11:20:20"
+    duration_s: 10
+    data_size_gb: 3.1
+    test_attributes:
+      tnchan: N/A
+      tdm: 2.64476
+      ttsamp: N/A
+
+  DS11:
+    description: "Bright PSR, PPQQ, channelised"
+    telescope: MeerKAT
+    data_type: "PSRFITS File"
+    file_name: "J1644-4559_MeerKAT_PTUSE_PPQQ.sf"
+    npol: 2
+    ndim: 1
+    nbit: 8
+    nchan: 768
+    bandwidth_mhz: 642
+    freq_mhz: 1284
+    tsamp: 38.28
+    source: "PSR J1644-4559"
+    utc_start_date: "2019-10-13-13:46:10"
+    duration_s: 7.5
+    data_size_gb: 0.6
+    test_attributes:
+      tnchan: N/A
+      tdm: 478.8
+      ttsamp: 7.656e-05
+
+  DS12:
+    description: "Bright MSP, Intensity, channelised"
+    telescope: MeerKAT
+    data_type: "PSRFITS File"
+    file_name: "J0437-4715_MeerKAT_PTUSE_Intensity.sf"
+    npol: 1
+    ndim: 1
+    nbit: 8
+    nchan: 768
+    bandwidth_mhz: 642
+    freq_mhz: 1284
+    tsamp: 9.57
+    source: "PSR J0437-4715"
+    utc_start_date: "2019-07-01-11:20:20"
+    duration_s: 10
+    data_size_gb: 3.1
+    test_attributes:
+      tnchan: N/A
+      tdm: 2.64476
+      ttsamp: 38.28e-6
+
+  DS13:
+    description: "Bright PSR, Intensity, channelised"
+    telescope: MeerKAT
+    data_type: "PSRFITS File"
+    file_name: "J1644-4559_MeerKAT_PTUSE_Intensity.sf"
+    npol: 1
+    ndim: 1
+    nbit: 8
+    nchan: 768
+    bandwidth_mhz: 642
+    freq_mhz: 1284
+    tsamp: 38.28
+    source: "PSR J1644-4559"
+    utc_start_date: "2019-10-13-13:46:10"
+    duration_s: 7.5
+    data_size_gb: 0.6
+    test_attributes:
+      tnchan: N/A
+      tdm: 478.8
+      ttsamp: N/A
+
+  DS14:
+    description: "Simulated Square Wave"
+    telescope: SKA1
+    data_type: "PST Voltage Recorder Files"
+    file_name: "square_wave.pstvr"
+    npol: 2
+    ndim: 2
+    nbit: 16
+    nchan: 96
+    bandwidth_mhz: 3.7037
+    freq_mhz: 1000
+    tsamp: 25.92
+    source: "Square Wave"
+    utc_start_date: "2023-08-05-11:07:09"
+    duration_s: 1.0
+    data_size_gb: 0.029
+    test_attributes:
+      tnchan: N/A
+      tdm: 478.8
+      ttsamp: N/A

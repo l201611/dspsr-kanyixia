@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "dspsr-pipeline-test-framework"
+version = "0.2.0"
+description = "Python program for testing DSPSR's pipelines"
+authors = ["jesmigel <jesmigel.developer@gmail.com>"]
+license = "See License file"
+readme = "README.md"
+packages = [
+  { include = "pipeline", from ="src" },
+]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+pyyaml = "^6.0.2"
+tabulate = "^0.9.0"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.8.0"
+pylint = "^3.3.1"
+pytest = "^8.3.3"
+autopep8 = "^2.3.1"
+pytest-cov = "^5.0.0"
+isort = "^5.13.2"
+pytest-html = "^4.1.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

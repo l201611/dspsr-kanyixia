@@ -1,0 +1,101 @@
+
+---
+# Source: ska-pst-test-parent/charts/ska-pst/templates/core/primaryvolume.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ska-pst-dspsr-$CI_COMMIT_SHORT_SHA
+  labels:
+    app: ska-pst-dspsr
+    app.kubernetes.io/name: ska-pst-dspsr
+    app.kubernetes.io/managed-by: "gitlab"
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 10G
+  local:
+    path: /data/dspsr-test-data
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - pst-beam2
+  persistentVolumeReclaimPolicy: Delete
+  volumeMode: Filesystem
+  storageClassName: local-storage
+
+---
+# Source: ska-pst-test-parent/charts/ska-pst/templates/core/primaryvolume.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ska-pst-dspsr-$CI_COMMIT_SHORT_SHA
+  labels:
+    app: ska-pst-dspsr
+    app.kubernetes.io/name: ska-pst-dspsr
+    app.kubernetes.io/managed-by: "gitlab"
+spec:
+  storageClassName: local-storage
+  volumeName: ska-pst-dspsr-$CI_COMMIT_SHORT_SHA
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 10G
+---
+# Source: ska-pst-test-parent/templates/test-utils.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ska-pst-dspsr
+  labels:
+    app: ska-pst-dspsr
+    app.kubernetes.io/managed-by: "gitlab"
+    app.kubernetes.io/name: ska-pst-dspsr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ska-pst-dspsr
+      app.kubernetes.io/name: ska-pst-dspsr
+      app.kubernetes.io/managed-by: "gitlab"
+  template:
+    metadata:
+      labels:
+        app: ska-pst-dspsr
+        app.kubernetes.io/name: ska-pst-dspsr
+        app.kubernetes.io/managed-by: "gitlab"
+    spec:
+      containers:
+        - name: dspsr
+          image: "registry.gitlab.com/ska-telescope/pst/ska-pst-dspsr/dspsr:$CI_COMMIT_SHORT_SHA"
+          imagePullPolicy: Always
+          command: ["bash"]
+          tty: true
+          resources:
+            limits:
+              cpu: 2000m
+              memory: 32Gi
+            requests:
+              cpu: 2000m
+              memory: 24Gi
+          volumeMounts:
+          # ska-pst-core storage
+            - name: ska-pst-dspsr-nvme
+              mountPath: /data/dspsr-test-data
+      nodeSelector:
+        kubernetes.io/hostname: pst-beam2
+      tolerations:
+        - effect: NoExecute
+          key: nvidia.com/gpu
+          value: "true"
+      volumes:
+      # ska-pst-core storage
+        - name: ska-pst-dspsr-nvme
+          persistentVolumeClaim:
+            claimName: ska-pst-dspsr-$CI_COMMIT_SHORT_SHA
