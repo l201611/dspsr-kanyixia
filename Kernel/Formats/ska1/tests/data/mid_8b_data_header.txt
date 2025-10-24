@@ -1,0 +1,37 @@
+HDR_SIZE              16384
+HDR_VERSION           1.0
+
+NCHAN                 555
+NPOL                  2
+NDIM                  2
+NBIT                  8
+TSAMP                 16.276041667
+
+UDP_NSAMP             4
+UDP_NCHAN             185
+WT_NSAMP              4
+WT_VALID              1
+
+# NCHAN * NPOL * NDIM * NBIT/8 * UDP_NSAMP
+RESOLUTION            17760
+
+BYTES_PER_SECOND      4938271.604938271
+SCANLEN_MAX           300
+EB_ID                 eb-m001-20230921-12345
+
+TELESCOPE             SKAMid
+INSTRUMENT            MidCBF
+SOURCE                Test
+FREQ                  59.6736
+BW                    379.8368
+
+NBIT_OUT              8
+POLN_FT               Both
+CHAN_FT               0,91
+DIGITIZER_SCALE       1.0
+DIGITIZER_INIT_TIME   0.1
+
+UTC_START             2024-05-21-02:53:13
+OBS_OFFSET            0
+
+SCAN_ID               12345

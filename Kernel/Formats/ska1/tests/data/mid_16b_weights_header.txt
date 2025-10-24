@@ -1,0 +1,43 @@
+HDR_SIZE              16384
+HDR_VERSION           1.0
+
+NCHAN                 370
+NPOL                  1
+NDIM                  1
+NBIT                  16
+TSAMP                 65.104166668
+
+UDP_NSAMP             4
+UDP_NCHAN             185
+WT_NSAMP              4
+WT_VALID              1
+
+# Size of the packet scales and weights
+PACKET_SCALES_SIZE    4
+PACKET_WEIGHTS_SIZE   370
+
+# Size of a heaps scales and weights
+BLOCK_HEADER_BYTES    8
+BLOCK_DATA_BYTES      740
+RESOLUTION            748
+
+BYTES_PER_SECOND      57870.3703703704
+SCANLEN_MAX           300
+EB_ID                 eb-m001-20230921-12345
+
+TELESCOPE             SKAMid
+INSTRUMENT            MidCBF
+SOURCE                Test
+FREQ                  379.8368
+BW                    59.6736
+
+NBIT_OUT              8
+POLN_FT               Both
+CHAN_FT               0,91
+DIGITIZER_SCALE       1.0
+DIGITIZER_INIT_TIME   0.1
+
+UTC_START             2024-05-21-02:53:13
+OBS_OFFSET            0
+
+SCAN_ID               12345
