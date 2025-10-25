@@ -27,6 +27,30 @@
   and total `BW`; optional `RA`/`DEC` strings are translated to sky
   coordinates when present.【F:Kernel/Formats/mark5b/Mark5bFile.C†L139-L216】
 
+### Example `.hdr`
+```
+FORMAT       Mark5B-1024-16-2
+TELESCOPE    VLBA
+RECEIVER     VLBI
+SOURCE       PSR B1937+21
+MODE         PSR
+FREQ         1400.0
+BW           64.0
+NPOL         2
+NCHAN        1
+REFMJD       60312
+RA           19:39:38.5602
+DEC          21:34:59.141
+DATAFILE     B1937+21_60312_1400MHz.m5b
+```
+
+- `FORMAT` must use the `mark5access` descriptor naming the Mbps rate,
+  number of tracks, and bits per sample.
+- `NPOL`/`NCHAN` are optional but help downstream tools interpret the stream
+  layout if you have split the Mark5B recording across virtual channels.
+- Either `REFMJD` plus the frame timestamps or an absolute `MJD` seed the
+  observation start time; include whichever matches your recording notes.
+
 ## 5. Deriving stream layout
 - After `mark5access` reports the stream parameters, `Mark5bFile` computes the
   number of polarisations by comparing the Mbps rate, bit depth, and recorded
