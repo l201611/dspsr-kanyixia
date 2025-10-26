@@ -71,6 +71,15 @@ DATAFILE     B1937+21_60312_1400MHz.m5b
   build is compiled with `HAVE_mark5b`, so simply pointing `dspsr` at a Mark5B
   header/data pair activates this pipeline.【F:Kernel/Formats/File_registry.C†L129-L137】【F:Kernel/Formats/Unpacker_registry.C†L180-L190】
 
+## 8. Building with `mark5access`
+- `dspsr` discovers the Mark5B support code only when the `mark5access`
+  headers are available at configure time. If the library is not packaged with
+  a `pkg-config` file you can direct the build system to a manual installation
+  by adding `--with-mark5access-dir=/path/to/mark5access` to the `configure`
+  command. The macro populates the appropriate include and library search
+  paths before verifying that `mark5access.h` and `libmark5access` are usable,
+  preventing the missing-header failures seen with older releases.
+
 In summary, a Mark5B observation consists of a raw file plus a `.hdr`
 metadata block describing the stream format. `dspsr` uses the ASCII header to
 bootstrap `mark5access`, derives the timing and layout from the library's
