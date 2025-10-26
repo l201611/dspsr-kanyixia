@@ -158,9 +158,6 @@ void dsp::VDIFFile::open_file (const char* filename)
   // the number of polns for now, and NCHAN is 1.  NBIT is in VDIF packets.
   // We'll compute TSAMP from the bandwidth.  NDIM (real vs complex sampling)
   // is in VDIF packets via the iscomplex param.
-  // @LZX - for now, the prog can run without err when set NCHAN NPOL to satisfy
-  // NCHAN * NPOL = vdif_nchan
-  // so, comments need an update here ???
   ASCIIObservation* info_tmp = new ASCIIObservation;
   info = info_tmp;
 
