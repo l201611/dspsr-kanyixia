@@ -154,10 +154,11 @@ void dsp::VDIFFile::open_file (const char* filename)
   }
 
   // Parse the standard ASCII info.  Timestamps are in VDIF packets
-  // so not required.  Also we'll assume VDIF's "nchan" really gives
-  // the number of polns for now, and NCHAN is 1.  NBIT is in VDIF packets.
-  // We'll compute TSAMP from the bandwidth.  NDIM (real vs complex sampling)
-  // is in VDIF packets via the iscomplex param.
+  // so not required.  VDIF's "nchan" field counts the total number of
+  // time streams (polarisations × frequency channels) and we verify it
+  // matches the product of the ASCII NPOL and NCHAN entries.  NBIT is in
+  // VDIF packets.  We'll compute TSAMP from the bandwidth.  NDIM (real vs
+  // complex sampling) is in VDIF packets via the iscomplex param.
   ASCIIObservation* info_tmp = new ASCIIObservation;
   info = info_tmp;
 
