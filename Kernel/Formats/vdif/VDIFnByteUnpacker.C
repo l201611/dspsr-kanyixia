@@ -56,9 +56,11 @@ void dsp::VDIFnByteUnpacker::unpack ()
   
   const unsigned char* base = input->get_rawptr();
 
-  for (unsigned ichan=0; ichan<nchan; ichan++) 
+  // The order of the vdif_chans can be changed to adapt your data
+  // The order " for npol {for nchan} " can be used for most of the OBS mode: 0xFFFFFFFF, vsi4=vlba
+  for (unsigned ipol=0; ipol<npol; ipol++) 
   {
-    for (unsigned ipol=0; ipol<npol; ipol++) 
+    for (unsigned ichan=0; ichan<nchan; ichan++) 
     {
       const unsigned char* from = base + (ichan*npol + ipol) * ndim * nbyte;
       float* into = output->get_datptr (ichan, ipol);
